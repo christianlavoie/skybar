@@ -102,6 +102,14 @@ class SkybarConfig {
         return getConfigValue("source.fsPath", null);
     }
 
+    String getReportPath() {
+        return getConfigValue("report.path", null);
+    }
+
+    long getReportInterval() {
+        return Long.parseLong(getConfigValue("report.interval", "600")); // 10 minutes default
+    }
+
     @Nullable
     private String getConfigValue(String propName, @Nullable String defaultValue) {
         String propNameInNameSpace = "skybar." + propName;

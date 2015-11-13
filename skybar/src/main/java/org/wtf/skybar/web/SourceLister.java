@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class SourceLister extends AbstractHandler {
     private static final Logger LOG = Log.getLogger(SourceLister.class);
+
     private final SourceProvider[] sourceProviders;
     private final SkybarRegistry registry;
 
@@ -35,32 +36,42 @@ public class SourceLister extends AbstractHandler {
     }
 
     /**
-     * Iterate through all our search paths to try to find the requested resource. 
-     * @param path URI path starting with "/".
+     * Iterate through all our search paths to try to find the requested resource.
+     *
+     * @param target URI path starting with "/".
+     * @param baseRequest
      * @return found Resource or null if not found.
      * @throws MalformedURLException if invalid URL passed in.
      */
-    public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+    public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
+            throws IOException, ServletException {
+
         String path = target.substring(1);
+        LOG.info("Source file requested: " + path);
         ClassLoader loader = registry.getClassLoader(path);
-        if(loader != null) {
-            Source source = getSource(path, loader);
-            if(source != null) {
-                response.setContentType("text/plain");
-                source.write(response.getOutputStream());
-                baseRequest.setHandled(true);
-            }
+        if (loader == null) {
+            LOG.warn("Could not find class loader for path: " + path);
+            return;
         }
 
+        Source source = getSource(path, loader);
+        if (source == null) {
+            LOG.warn("Could not find source for: " + path);
+            return;
+        }
+
+        response.setContentType("text/plain");
+        source.write(response.getOutputStream());
+        baseRequest.setHandled(true);
     }
 
     Source getSource(String path, ClassLoader classLoader) {
         for (SourceProvider sourceProvider : sourceProviders) {
             Source source = sourceProvider.lookup(path, classLoader);
-            if(source != null) {
-                return  source;
-            }
+            if (source != null)
+                return source;
         }
+
         return null;
     }
 }

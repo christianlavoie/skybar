@@ -113,11 +113,19 @@ public class SkybarClassVisitorTest {
     @Test
     public void shouldCountTryWithResources() throws NoSuchMethodException, InvocationTargetException,
         IllegalAccessException {
+        if (isWindows())
+            return; // How hilarious. A UNIX-only test (requires /dev/null)
+
         Class<?> clazz = instrumentClass(TryWithResources.class);
 
         invokeStaticMethod(clazz, "foo");
 
         assertCorrectSourceCount(clazz);
+    }
+
+    private boolean isWindows() {
+        String OS = System.getProperty("os.name").toLowerCase();
+        return OS.indexOf("win") >= 0;
     }
 
     @Test
@@ -168,8 +176,7 @@ public class SkybarClassVisitorTest {
     }
 
     private static IntLongMap linesOf(Class<?> clazz) {
-        SkybarRegistry.DeltaListener deltaListener = (x) -> {
-        };
+        SkybarRegistry.DeltaListener deltaListener = (x) -> { };
         SkybarRegistry registry = SkybarRegistry.registry;
         registry.updateListeners(new HashMap<>());
         Map<String, IntLongMap> snapshot = registry.getCurrentSnapshot(deltaListener);

@@ -7,6 +7,7 @@ import org.wtf.skybar.registry.SkybarRegistry;
 import org.wtf.skybar.source.FileSystemSourceProvider;
 import org.wtf.skybar.source.MavenSourceArtifactSourceProvider;
 import org.wtf.skybar.source.SourceProvider;
+import org.wtf.skybar.time.RegistryDumpStats;
 import org.wtf.skybar.transform.SkybarTransformer;
 import org.wtf.skybar.web.WebServer;
 
@@ -19,7 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class SkybarAgent {
-
     private static final org.eclipse.jetty.util.log.Logger LOG = Log.getLogger(SkybarAgent.class);
     private static final Logger logger = LoggerFactory.getLogger(SkybarAgent.class);
 
@@ -43,6 +43,14 @@ public class SkybarAgent {
         int configuredPort = config.getWebUiPort();
         int actualPort = new WebServer(SkybarRegistry.registry, configuredPort, getSourceProviders(config)).start();
         logger.info("Skybar started on port " + actualPort+ " against classes matching " + describeIncludes(config));
+
+        String reportPath = config.getReportPath();
+        if (null == reportPath)
+            return;
+
+        long reportInterval = config.getReportInterval();
+        RegistryDumpStats dumper = new RegistryDumpStats(SkybarRegistry.registry, new File(reportPath), reportInterval);
+        dumper.setDaemon(true);
     }
 
     /**
